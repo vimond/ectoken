@@ -1,3 +1,5 @@
+package com.verizon.edgecast.ectoken;
+
 /**
 * Copyright (C) 2016 Verizon. All Rights Reserved.
 *
