@@ -11,10 +11,6 @@ jobs:
       - checkout
 
       - run:
-          name: Copy mvn settings.xml
-          command: cp circleci/settings.xml ~/.m2/
-
-      - run:
           name: Capture build version
           command: |
             circleci/get-application-version.sh | tee circle_build_version.txt
@@ -28,6 +24,10 @@ jobs:
             sh circleci/set-application-version.sh "$(cat circle_build_version.txt)"
 
       - run: mvn dependency:go-offline
+
+      - run:
+          name: Copy mvn settings.xml
+          command: cp circleci/settings.xml ~/.m2/
       
       - save_cache:
           paths:
