@@ -11,6 +11,10 @@ jobs:
       - checkout
 
       - run:
+          name: Copy mvn settings.xml
+          command: cp circleci/settings.xml ~/.m2/
+
+      - run:
           name: Capture build version
           command: |
             circleci/get-application-version.sh | tee circle_build_version.txt
