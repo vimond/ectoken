@@ -5,14 +5,29 @@ jobs:
     working_directory: ~/ectoken
 
     docker:
-      - image: circleci/openjdk:8-jdk-browsers
+        - image: vimond-dockerv2-local.jfrog.io/circleci2-oracle-jdk8:0.0.0-24-gefed89c
+          command: '/usr/local/bin/circleci-build-init'
+          auth:
+            username: $ARTIFACTORY_USER
+            password: $ARTIFACTORY_PASSWORD
+
     steps:
 
       - checkout
 
+      - run:
+          name: Capture build version
+          command: |
+            circleci/get-application-version.sh | tee circle_build_version.txt
+
       - restore_cache:
           key: ectoken-{{ checksum "pom.xml" }}
-      
+
+      - run:
+          name: Maven set version
+          command: |
+            sh circleci/set-application-version.sh "$(cat circle_build_version.txt)"
+
       - run: mvn dependency:go-offline
       
       - save_cache:
@@ -25,6 +40,18 @@ jobs:
       - store_test_results:
           path: target/surefire-reports
       
-      - store_artifacts:
-          path: target/ectoken-0.0.1-SNAPSHOT.jar
-
+      - run:
+          command: |
+            VERSION="$(cat circle_build_version.txt)"; \
+            ARTIFACT="ectoken"; \
+            GROUP_ID="com.verizon.edgecast"; \
+            cp "$HOME"/ectoken/java-ectoken/target/${ARTIFACT}-${VERSION}.jar \
+                ${ARTIFACT}-${VERSION}.jar; \
+            mvn --batch-mode deploy:deploy-file \
+                -DgroupId="${GROUP_ID}" \
+                -DartifactId="${ARTIFACT}" \
+                -Dversion="${VERSION}" \
+                -Dpackaging=jar \
+                -Dfile="${ARTIFACT}-${VERSION}.jar" \
+                -DrepositoryId=central \
+                -Durl="https://vimond.jfrog.io/vimond/ext-releases-local"
